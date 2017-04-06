@@ -1,5 +1,5 @@
 import serial
-import sys, os, getopt, time
+import sys, os, getopt, time, signal
 
 import measurementHelper
 import oledHelper
@@ -56,6 +56,18 @@ if serialPort.isOpen() == False:
 	print "ERROR: Failed to initialize serial port!"
 	exit()
 
+# function to close the serial port
+def closePort():
+	if serialPort.isOpen():
+		serialPort.close()
+
+# Signal interrupt handler
+def signalHandler(signal, frame):
+	closePort()
+	sys.exit()
+
+# define a signal to run a function when ctrl+c is pressed
+signal.signal(signal.SIGINT, signalHandler)
 
 
 ### MAIN PROGRAM ###
@@ -85,12 +97,13 @@ def mainProgram():
 
 		# write the average measurement to the OLED
 		if OLED_EXP_PRESENT:
-			oledHelper.oledWriteMeasurements(averageLevel)
+			percentage = measurementHelper.getMeasurementAsPercent(averageLevel)
+			oledHelper.oledWriteMeasurements(averageLevel, percentage)
 
 		time.sleep(1)
 
 	# close the serial port
-	serialPort.close()
+	closePort()
 
 if __name__ == "__main__":
 	mainProgram()

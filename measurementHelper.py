@@ -1,3 +1,6 @@
+
+MAX_MEASUREMENT_VALUE 		= 1023
+
 # read analog value (0-1023) from the microcontroller
 #	returns None if value is not read successfully
 def readMoistureLevel(serialPort):
@@ -51,3 +54,7 @@ def getAverageMeasurement(measurementList):
 	average = int( sum / float(len(measurementList)) )
 
 	return average
+
+def getMeasurementAsPercent(measurement):
+	percent = int( (float(measurement) / float(MAX_MEASUREMENT_VALUE)) * 100.0)
+	return percent
