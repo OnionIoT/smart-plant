@@ -6,7 +6,7 @@ import oledHelper
 
 MAX_MEASUREMENT_COUNT 	= 15
 OLED_EXP_PRESENT		= False
-VERBOSE					= False
+VERBOSE					= True
 
 # usage statement
 def printUsage():
@@ -26,7 +26,7 @@ def printUsage():
 
 # read the command line arguments
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hvn:o", ["help", "verbose", "number=", "oled"])
+	opts, args = getopt.getopt(sys.argv[1:], "hvqn:o", ["help", "verbose", "quiet", "number=", "oled"])
 except getopt.GetoptError:
 	printUsage()
 	sys.exit(2)
@@ -36,6 +36,8 @@ for opt, arg, in opts:
 		sys.exit()
 	elif opt in ("-v", "--verbose"):
 		VERBOSE = True
+	elif opt in ("-q", "--quiet"):
+		VERBOSE = False
 	elif opt in ("-o", "--oled"):
 		OLED_EXP_PRESENT = True
 	elif opt in ("-n", "--number"):
@@ -51,7 +53,7 @@ for opt, arg, in opts:
 dirName = os.path.dirname(os.path.abspath(__file__))
 
 # initialize the serial port
-serialPort = serial.Serial('/dev/ttyS1',9600,timeout=2)
+serialPort = serial.Serial('/dev/ttyS1', 9600, timeout=2)
 if serialPort.isOpen() == False:
 	print "ERROR: Failed to initialize serial port!"
 	exit()
@@ -61,49 +63,70 @@ def closePort():
 	if serialPort.isOpen():
 		serialPort.close()
 
+
+# get a reading from the plant, average it out with previous readings and display it on the command line and optionally on the OLED
+def getPlantMeasurement(measurementList):
+	# get the latest moisture sensor reading
+	readValue = measurementHelper.readMoistureLevel(serialPort)
+	if VERBOSE:
+		print "> Latest measurement: ", readValue
+
+	# add the measurement to our list
+	measurementList = measurementHelper.recordMeasurement(readValue, measurementList, MAX_MEASUREMENT_COUNT)
+	if VERBOSE:
+		print " > Measurement List: ",
+		for val in measurementList:
+			print "%d%% "%(val),
+		print ""
+
+	# find the average value
+	averageLevel = measurementHelper.getAverageMeasurement(measurementList)
+	if VERBOSE:
+		print " >> Average Value: %d%%"%(averageLevel)
+	else:
+		print averageLevel
+
+	# write the average measurement to the OLED
+	if OLED_EXP_PRESENT:
+		oledHelper.writeMeasurements(averageLevel)
+
+	return measurementList
+
+# function to run before ending the program
+def endMeasurements():
+	if OLED_EXP_PRESENT:
+		oledHelper.setDoneScreen()
+	closePort()
+
+
 # Signal interrupt handler
 def signalHandler(signal, frame):
-	closePort()
+	endMeasurements()
 	sys.exit()
 
 # define a signal to run a function when ctrl+c is pressed
 signal.signal(signal.SIGINT, signalHandler)
 
 
+
 ### MAIN PROGRAM ###
 def mainProgram():
 	# initialize the OLED Expansion
 	if OLED_EXP_PRESENT:
-		oledHelper.oledInit(dirName)
+		oledHelper.init(dirName)
 
 	# list to hold all measurements
 	moistureLevels = []
 
 	# program loop
 	while True:
-		# get the latest moisture sensor reading
-		readValue = measurementHelper.readMoistureLevel(serialPort)
-		if VERBOSE:
-			print "> Latest measurement: ", readValue
-		# add the measurement to our list
-		moistureLevels = measurementHelper.recordMeasurement(readValue, moistureLevels, MAX_MEASUREMENT_COUNT)
-		if VERBOSE:
-			print " > Measurement List: ", moistureLevels
-		# find the average value
-		averageLevel = measurementHelper.getAverageMeasurement(moistureLevels)
-		if VERBOSE:
-			print " >> Average Value: ",
-		print averageLevel
-
-		# write the average measurement to the OLED
-		if OLED_EXP_PRESENT:
-			percentage = measurementHelper.getMeasurementAsPercent(averageLevel)
-			oledHelper.oledWriteMeasurements(averageLevel, percentage)
-
+		# get a reading from the plant
+		moistureLevels = getPlantMeasurement(moistureLevels)
+		# delay between readings
 		time.sleep(1)
 
 	# close the serial port
-	closePort()
+	endMeasurements()
 
 if __name__ == "__main__":
 	mainProgram()

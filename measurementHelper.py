@@ -34,8 +34,11 @@ def recordMeasurement(currentMeasurement, measurementList, maxMeasurements):
 	except:
 		return measurementList
 
+	# convert the raw measurement into a percent
+	percent = getMeasurementAsPercent(value)
+
 	# add it to the list
-	measurementList.append(value)
+	measurementList.append(percent)
 
 	# remove the first element from the list
 	if len(measurementList) > maxMeasurements:
@@ -55,6 +58,7 @@ def getAverageMeasurement(measurementList):
 
 	return average
 
+# convert an analog microcntroller reading into a percentage
 def getMeasurementAsPercent(measurement):
 	percent = int( (float(measurement) / float(MAX_MEASUREMENT_VALUE)) * 100.0)
 	return percent

@@ -2,7 +2,7 @@ import os
 from OmegaExpansion import oledExp
 
 # initialze the OLED Expansion and set it up for use with the program
-def oledInit(dirName):
+def init(dirName):
 	oledExp.setVerbosity(-1)
 	status  = oledExp.driverInit()
 	if status != 0:
@@ -26,15 +26,20 @@ def oledInit(dirName):
 	oledExp.write('Level:')
 
 # write out the soil moisture value
-def oledWriteMeasurements(average, percent):
+def writeMeasurements(value):
 	# set the cursor the fifth line and the right side of the screen
 	oledExp.setTextColumns()
 	oledExp.setCursor(4,12)
 	# write out the text
-	oledExp.write( str(average) )
+	oledExp.write( str(value)  + "%" )
 
-	# set the cursor the sixth line and the right side of the screen
+# clear the screen, write a message indicating no new measurements are coming in
+def setDoneScreen():
+	# clear the screen
+	oledExp.clear()
+
+	# set the cursor the middle line
 	oledExp.setTextColumns()
-	oledExp.setCursor(5,12)
+	oledExp.setCursor(3,0)
 	# write out the text
-	oledExp.write( str(percent) + "%" )
+	oledExp.write( " SMART PLANT OFFLINE" )
