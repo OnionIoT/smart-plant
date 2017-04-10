@@ -40,6 +40,12 @@ def setDoneScreen():
 
 	# set the cursor the middle line
 	oledExp.setTextColumns()
-	oledExp.setCursor(3,0)
+	oledExp.setCursor(2,0)
 	# write out the text
 	oledExp.write( " SMART PLANT OFFLINE" )
+
+	# set the cursor the middle line
+	oledExp.setTextColumns()
+	oledExp.setCursor(4,0)
+	# write out the text
+	oledExp.write( "Just a regular plant " )
