@@ -1,12 +1,17 @@
 import serial
-import sys, os, getopt, time, signal
+import sys, os, getopt, time, signal, json
 
 import measurementHelper
 import oledHelper
 
-MAX_MEASUREMENT_COUNT 	= 15
-OLED_EXP_PRESENT		= False
-VERBOSE					= True
+VERBOSE	= True
+MAX_MEASUREMENT_COUNT = 15
+OLED_EXP_PRESENT = False
+LOSANT_CLOUD = False
+losantConfig = {}
+
+# find the directory of the script
+dirName = os.path.dirname(os.path.abspath(__file__))
 
 # usage statement
 def printUsage():
@@ -26,7 +31,7 @@ def printUsage():
 
 # read the command line arguments
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hvqn:o", ["help", "verbose", "quiet", "number=", "oled"])
+	opts, args = getopt.getopt(sys.argv[1:], "hvqn:ol:", ["help", "verbose", "quiet", "number=", "oled", "losant="])
 except getopt.GetoptError:
 	printUsage()
 	sys.exit(2)
@@ -40,6 +45,20 @@ for opt, arg, in opts:
 		VERBOSE = False
 	elif opt in ("-o", "--oled"):
 		OLED_EXP_PRESENT = True
+	elif opt in ("-l", "--losant"):
+		import losantHelper
+		LOSANT_CLOUD = True
+		filepath = '/'.join([dirName, arg])
+		if os.path.abspath(arg):
+			filepath = arg
+		with open( filepath ) as f:
+			try:
+				losantConfig = json.load(f)
+			except:
+				print("ERROR: expecting JSON file")
+				sys.exit()
+			if not losantHelper.isConfigValid(losantConfig):
+				sys.exit()
 	elif opt in ("-n", "--number"):
 		print "Setting measuremet count to ", arg
 		try:
@@ -48,9 +67,6 @@ for opt, arg, in opts:
 			print("ERROR: invalid input")
 			printUsage()
 			sys.exit()
-
-# find the directory of the script
-dirName = os.path.dirname(os.path.abspath(__file__))
 
 # initialize the serial port
 serialPort = serial.Serial('/dev/ttyS1', 9600, timeout=2)
@@ -90,6 +106,12 @@ def getPlantMeasurement(measurementList):
 	if OLED_EXP_PRESENT:
 		oledHelper.writeMeasurements(averageLevel)
 
+	# send average measurement to Losant Cloud
+	if LOSANT_CLOUD:
+		losantHelper.sendMeasurement("moisture", averageLevel)
+		if VERBOSE:
+			print " > sent value to Losant"
+
 	return measurementList
 
 # function to run before ending the program
@@ -114,6 +136,10 @@ def mainProgram():
 	# initialize the OLED Expansion
 	if OLED_EXP_PRESENT:
 		oledHelper.init(dirName)
+
+	# initialize connection to Losant Cloud
+	if LOSANT_CLOUD:
+		losantHelper.init(losantConfig['deviceId'], losantConfig['key'], losantConfig['secret'])
 
 	# list to hold all measurements
 	moistureLevels = []
