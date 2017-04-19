@@ -31,7 +31,7 @@ def writeMeasurements(value):
 	oledExp.setTextColumns()
 	oledExp.setCursor(4,12)
 	# write out the text
-	oledExp.write( str(value)  + "%" )
+	oledExp.write( str(value)  + "% " )
 
 # clear the screen, write a message indicating no new measurements are coming in
 def setDoneScreen():
