@@ -2,6 +2,7 @@ import time
 from losantmqtt import Device
 
 device = None
+waterPlantFunction = None
 
 # check if config file has: deviceId, key, and secret
 #	if it does, return True
@@ -23,16 +24,28 @@ def isConfigValid(config):
 
 	return bValid
 
-# initialize mqtt connection with losant
-def init(deviceId, key, secret):
-	global device
+# carry out actions from received commands
+def onCommand(device, command):
+	print("> Losant command!")
+	if command["name"] == "waterPlant":
+		print(" > Watering plant!")
+		try:
+			duration = int(command["payload"])
+			waterPlantFunction(duration)
+		except:
+			waterPlantFunction()
 
+# initialize mqtt connection with losant
+def init(deviceId, key, secret, waterPlantFunctionPtr=None):
+	global device
 	# Construct device
 	device = Device(deviceId, key, secret)
 
-	# TODO: implement this for part 3
-	# Listen for commands.
-	#device.add_event_observer("command", on_command)
+	# setup command functions
+	global waterPlantFunction
+	waterPlantFunction = waterPlantFunctionPtr
+	# Listen for commands
+	device.add_event_observer("command", onCommand)
 
 	# Connect to Losant.
 	device.connect(blocking=False)

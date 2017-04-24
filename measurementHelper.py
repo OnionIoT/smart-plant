@@ -12,7 +12,7 @@ def readMoistureLevel(serialPort):
 		value = serialPort.readline()
 
 		if value == "":
-			print "Got blank value!"
+			print("Got blank value!")
 			value = None
 		else:
 			value = value.rstrip() 	#chomp the newline at the end of the response
