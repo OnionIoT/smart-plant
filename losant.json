@@ -1,0 +1,5 @@
+{
+	"deviceId":"<Losant Device ID>",
+	"key":"<Losant Access Key>",
+	"secret":"<Losant Access Key Secret>"
+}

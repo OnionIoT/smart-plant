@@ -27,6 +27,10 @@ def printUsage():
 	print "                Where R is the number of measurements from"
 	print "                which to calculate the average measurement value."
 	print "                Set to %d by default"%(MAX_MEASUREMENT_COUNT)
+	print "    -l <json file>, --losant <json file>"
+	print "                Enable connection and reporting of plant data to Losant."
+	print "                Where <json file> is a path to a JSON configuration file "
+	print "                that must contain: the Losant deviceId, key, and secret"
 	print ""
 
 # read the command line arguments
