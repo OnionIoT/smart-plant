@@ -32,6 +32,8 @@ def printUsage():
 	print("                Enable connection and reporting of plant data to Losant.")
 	print("                Where <json file> is a path to a JSON configuration file ")
 	print("                that must contain: the Losant deviceId, key, and secret")
+	print("    -p, --pump  Enable receiving command from Losant to enable")
+	print("                a water pump for a specified duration")
 	print("")
 
 # read the command line arguments
